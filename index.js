@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 
 app.get('/about', function (req, res) {
-  let hello = "hello11";
+  let hello2 = "hello11";
   console.log(hello);
   
   res.send('Hello World 999');
