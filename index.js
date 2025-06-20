@@ -4,7 +4,7 @@ const app = express();
 app.get('/about', function (req, res) {
   let hello = "hello11";
   let world = "world22";
-  console.log(hello);
+  console.log(hello, world);
   
   res.send('Hello World 999');
 });
