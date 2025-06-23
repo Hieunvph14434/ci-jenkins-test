@@ -41,7 +41,7 @@ pipeline {
 
         stage('Auto Merge PR') {
             when {
-                expression { return env.CHANGE_ID != null }
+                expression { return PR_NUMBER != null }
             }
             steps {
                 script {
