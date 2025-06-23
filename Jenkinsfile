@@ -38,36 +38,30 @@ pipeline {
             }
         }
 
-        stage('Auto Merge PR') {
-            when {
-                expression { return PR_NUMBER != null }
-            }
+        stage('Merge PR with Docker') {
             steps {
-                withCredentials([string(credentialsId: 'hieunv-sabi', variable: 'GITHUB_TOKEN')]) {
-                    script {
-                        echo "Merging PR #${PR_NUMBER} to ${BRANCH_NAME}..."
+                script {
+                    echo "Merging PR #${PR_NUMBER} to ${BRANCH_NAME}..."
 
-                        def response = sh(
-                        script: """
-                            if ! command -v curl > /dev/null; then
-                            apt-get update && apt-get install -y curl
-                            fi
-
-                            curl -s -o response.json -w "%{http_code}" -X PUT \\
-                            -H "Authorization: token \$GITHUB_TOKEN" \\
-                            -H "Accept: application/vnd.github.v3+json" \\
-                            https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
-                        """,
-                        returnStdout: true
+                    withCredentials([string(credentialsId: 'hieunv-sabi', variable: 'GITHUB_TOKEN')]) {
+                        def statusCode = sh(
+                            script: """
+                                docker run --rm curlimages/curl:latest \\
+                                -s -o response.json -w '%{http_code}' \\
+                                -X PUT \\
+                                -H "Authorization: token ${GITHUB_TOKEN}" \\
+                                -H "Accept: application/vnd.github.v3+json" \\
+                                https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
+                            """,
+                            returnStdout: true
                         ).trim()
 
-                        echo "Merge API response code: ${response}"
-                        sh 'cat response.json'
+                        echo "GitHub API merge status: ${statusCode}"
 
-                        if (response != "200") {
-                        error "❌ Merge failed. Status code: ${response}"
+                        if (statusCode != "200") {
+                            error "❌ Merge failed. Status code: ${statusCode}"
                         } else {
-                        echo "✅ Merge successful!"
+                            echo "✅ Merge successful!"
                         }
                     }
                 }
