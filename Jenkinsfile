@@ -8,7 +8,6 @@ pipeline {
 
     environment {
         BRANCH_NAME = 'master'
-        GITHUB_TOKEN = credentials('hieunv-sabi')
         GITHUB_REPO = 'Hieunvph14434/ci-jenkins-test'
         PR_NUMBER   = "${ghprbPullId}" 
     }
@@ -44,26 +43,32 @@ pipeline {
                 expression { return PR_NUMBER != null }
             }
             steps {
-                script {
-                    echo "Merging PR #${PR_NUMBER} to ${BRANCH_NAME}..."
+                withCredentials([string(credentialsId: 'hieunv-sabi', variable: 'GITHUB_TOKEN')]) {
+                    script {
+                        echo "Merging PR #${PR_NUMBER} to ${BRANCH_NAME}..."
 
-                    def response = sh (
+                        def response = sh(
                         script: """
-                        curl -s -o response.json -w "%{http_code}" -X PUT \\
-                        -H "Authorization: token ${GITHUB_TOKEN}" \\
-                        -H "Accept: application/vnd.github.v3+json" \\
-                        https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
+                            if ! command -v curl > /dev/null; then
+                            apt-get update && apt-get install -y curl
+                            fi
+
+                            curl -s -o response.json -w "%{http_code}" -X PUT \\
+                            -H "Authorization: token \$GITHUB_TOKEN" \\
+                            -H "Accept: application/vnd.github.v3+json" \\
+                            https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
                         """,
                         returnStdout: true
-                    ).trim()
+                        ).trim()
 
-                    echo "Merge API response code: ${response}"
-                    sh "cat response.json"
+                        echo "Merge API response code: ${response}"
+                        sh 'cat response.json'
 
-                    if (response != "200") {
+                        if (response != "200") {
                         error "❌ Merge failed. Status code: ${response}"
-                    } else {
+                        } else {
                         echo "✅ Merge successful!"
+                        }
                     }
                 }
             }
