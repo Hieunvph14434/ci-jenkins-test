@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 
 app.get('/about', function (req, res) {
-  let hello = "hello11";
+  let hello = "hello11 merge";
   let world = "world2e82";
   console.log(hello, world);
   
