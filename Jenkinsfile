@@ -38,30 +38,29 @@ pipeline {
             }
         }
 
-        stage('Merge PR with Docker') {
+        stage('Merge PR Safely') {
             steps {
-                script {
-                    echo "Merging PR #${PR_NUMBER} to ${BRANCH_NAME}..."
+                withCredentials([string(credentialsId: 'hieunv-sabi', variable: 'GITHUB_TOKEN')]) {
+                    script {
+                        echo "Merging PR #${PR_NUMBER}..."
 
-                    withCredentials([string(credentialsId: 'hieunv-sabi', variable: 'GITHUB_TOKEN')]) {
                         def statusCode = sh(
-                            script: """
-                                docker run --rm curlimages/curl:latest \\
-                                -s -o response.json -w '%{http_code}' \\
-                                -X PUT \\
-                                -H "Authorization: token ${GITHUB_TOKEN}" \\
-                                -H "Accept: application/vnd.github.v3+json" \\
-                                https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
-                            """,
+                            script: '''
+                                curl -s -o response.json -w "%{http_code}" -X PUT \\
+                                     -H "Authorization: token $GITHUB_TOKEN" \\
+                                     -H "Accept: application/vnd.github.v3+json" \\
+                                     https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
+                            ''',
                             returnStdout: true
                         ).trim()
 
-                        echo "GitHub API merge status: ${statusCode}"
+                        echo "GitHub API status code: ${statusCode}"
+                        sh 'cat response.json'
 
                         if (statusCode != "200") {
-                            error "❌ Merge failed. Status code: ${statusCode}"
+                            error "❌ Merge failed with status code ${statusCode}"
                         } else {
-                            echo "✅ Merge successful!"
+                            echo "✅ PR #${PR_NUMBER} merged successfully!"
                         }
                     }
                 }
