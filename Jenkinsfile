@@ -45,26 +45,26 @@ pipeline {
             }
             steps {
                 script {
-                echo "Merging PR #${PR_NUMBER} to ${BRANCH_NAME}..."
+                    echo "Merging PR #${PR_NUMBER} to ${BRANCH_NAME}..."
 
-                def response = sh (
-                    script: """
-                    curl -s -o response.json -w "%{http_code}" -X PUT \\
-                    -H "Authorization: token ${GITHUB_TOKEN}" \\
-                    -H "Accept: application/vnd.github.v3+json" \\
-                    https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
-                    """,
-                    returnStdout: true
-                ).trim()
+                    def response = sh (
+                        script: """
+                        curl -s -o response.json -w "%{http_code}" -X PUT \\
+                        -H "Authorization: token ${GITHUB_TOKEN}" \\
+                        -H "Accept: application/vnd.github.v3+json" \\
+                        https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
+                        """,
+                        returnStdout: true
+                    ).trim()
 
-                echo "Merge API response code: ${response}"
-                sh "cat response.json"
+                    echo "Merge API response code: ${response}"
+                    sh "cat response.json"
 
-                if (response != "200") {
-                    error "❌ Merge failed. Status code: ${response}"
-                } else {
-                    echo "✅ Merge successful!"
-                }
+                    if (response != "200") {
+                        error "❌ Merge failed. Status code: ${response}"
+                    } else {
+                        echo "✅ Merge successful!"
+                    }
                 }
             }
         }
