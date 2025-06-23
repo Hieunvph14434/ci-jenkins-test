@@ -10,7 +10,7 @@ pipeline {
         BRANCH_NAME = 'master'
         GITHUB_TOKEN = credentials('hieunv-sabi')
         GITHUB_REPO = 'Hieunvph14434/ci-jenkins-test'
-        PR_NUMBER   = "${env.CHANGE_ID}" 
+        PR_NUMBER   = "${ghprbPullId}" 
     }
 
     stages {
