@@ -12,7 +12,7 @@ pipeline {
 
             steps {
                 git branch: 'master',
-                    credentialsId: '2e41b5a7-bc65-4d28-97d9-5c58c7aaf815',
+                    credentialsId: '1fe7d95d-2896-4e34-969e-2a065149b53f',
                     url: 'https://github.com/Hieunvph14434/ci-jenkins-test.git'
 
                 sh 'npm install'
