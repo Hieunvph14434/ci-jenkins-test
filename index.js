@@ -3,8 +3,8 @@ const app = express();
 
 app.get('/about', function (req, res) {
   let hello = "hello11";
-  let world = "world2e82";
-  console.log(hello, world);
+  let world = hello + " world2e82";
+  console.log(world);
   
   res.send('Hello World 999');
 });
