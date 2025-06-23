@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18-alpine'
-            args '-u root'
-        }
-    }
+    agent none
 
     environment {
         BRANCH_NAME = 'master'
@@ -13,44 +8,51 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        stage('Install Dependencies') {
-            steps {
-                script {
-                    sh 'npm install'
+        stage('Code Check inside Docker') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u root'
                 }
             }
-        }
-        stage('Check code convention...') {
-            steps {
-                script {
-                    sh 'npm run lint'
+            stages {
+                stage('Checkout') {
+                    steps {
+                        checkout scm
+                    }
                 }
-            }
-        }
-        stage('Check done!') {
-            steps {
-                echo 'Check code convention successfully!!!'
+                stage('Install Dependencies') {
+                    steps {
+                        sh 'npm install'
+                    }
+                }
+                stage('Run Linter') {
+                    steps {
+                        sh 'npm run lint'
+                    }
+                }
+                stage('Lint Passed') {
+                    steps {
+                        echo '✅ Code passed lint check'
+                    }
+                }
             }
         }
 
-        stage('Merge PR Safely') {
+        stage('Merge PR (outside Docker)') {
+            agent any
             steps {
                 withCredentials([string(credentialsId: 'hieunv-sabi', variable: 'GITHUB_TOKEN')]) {
                     script {
-                        echo "Merging PR #${PR_NUMBER}..."
+                        echo "🔄 Merging PR #${PR_NUMBER}..."
 
                         def statusCode = sh(
-                            script: '''
+                            script: """
                                 curl -s -o response.json -w "%{http_code}" -X PUT \\
                                      -H "Authorization: token $GITHUB_TOKEN" \\
                                      -H "Accept: application/vnd.github.v3+json" \\
                                      https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}/merge
-                            ''',
+                            """,
                             returnStdout: true
                         ).trim()
 
